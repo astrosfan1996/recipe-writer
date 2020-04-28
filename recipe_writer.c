@@ -1,6 +1,6 @@
 /*
  * recipe_writer.c
- * version 1.0
+ * version 1.0.1
  */
 
 #include <errno.h>
@@ -51,7 +51,10 @@ Recipe* get_recipe()
         if(ingredient->data[0] == '\n') {
             free(ingredient->data);
             free(ingredient);
-            if(prev != NULL) {
+            ingredient = NULL;
+            if(prev == NULL) {
+                ingredients = NULL;
+            } else {
                 prev->next = NULL;
             }
             break;
@@ -77,7 +80,10 @@ Recipe* get_recipe()
         if(direction->data[0] == '\n') {
             free(direction->data);
             free(direction);
-            if(prev != NULL) {
+            direction = NULL;
+            if(prev == NULL) {
+                directions = NULL;
+            } else {
                 prev->next = NULL;
             }
             break;
@@ -104,7 +110,10 @@ Recipe* get_recipe()
             if(note->data[0] == '\n') {
                 free(note->data);
                 free(note);
-                if(prev != NULL) {
+                note = NULL;
+                if(prev == NULL) {
+                    notes = NULL;
+                } else {
                     prev->next = NULL;
                 }
                 break;
@@ -222,7 +231,9 @@ bool run_again(char* question)
 void strip_newline_char(char* str)
 {
     int len = strlen(str);
-    str[len - 1] = 0;
+    if(len > 0) {
+        str[len - 1] = 0;
+    }
 }
 
 void free_recipe(Recipe* rec)
