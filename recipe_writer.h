@@ -1,7 +1,13 @@
 /*
  * recipe_writer.h
- * version 1.0
  */
+
+#define ANSWER_BUFFER_MAX_SIZE 128
+#define RECIPE_NAME_MAX_SIZE 128
+#define INGREDIENT_NAME_MAX_SIZE 128
+#define DIRECTION_TEXT_MAX_SIZE 1024
+#define NOTE_TEXT_MAX_SIZE 1024
+#define FILENAME_MAX_SIZE 64
 
 typedef struct ListNode {
     char* data;

@@ -1,6 +1,5 @@
 /*
  * recipe_writer.c
- * version 1.0.1
  */
 
 #include <errno.h>
@@ -10,13 +9,14 @@
 #include <string.h>
 #include <unistd.h>
 #include "recipe_writer.h"
+#include "version.h"
 
 void strip_newline_char(char* str);
-void space_to_underscore(char* str);
+char* create_filename(const char* input);
 
 int main()
 {
-    printf("Welcome to recipe writer!\n\n");
+    printf("Welcome to recipe writer!\nVersion %s\n\n", VERSION);
     do {
         Recipe* rec = get_recipe();
         write_recipe_to_file(rec);
@@ -31,9 +31,9 @@ Recipe* get_recipe()
 
     /* Name */
     printf("Name: ");
-    char* name = malloc(128);
+    char* name = malloc(RECIPE_NAME_MAX_SIZE);
     do {
-        fgets(name, 128, stdin);
+        fgets(name, RECIPE_NAME_MAX_SIZE, stdin);
     } while(name[0] == '\n');
     strip_newline_char(name);
     printf("\n");
@@ -46,8 +46,8 @@ Recipe* get_recipe()
     ListNode* prev = NULL;
     while(true) {
         printf("  - ");
-        ingredient->data = malloc(128);
-        fgets(ingredient->data, 128, stdin);
+        ingredient->data = malloc(INGREDIENT_NAME_MAX_SIZE);
+        fgets(ingredient->data, INGREDIENT_NAME_MAX_SIZE, stdin);
         if(ingredient->data[0] == '\n') {
             free(ingredient->data);
             free(ingredient);
@@ -75,8 +75,8 @@ Recipe* get_recipe()
     int i = 1;
     while(true) {
         printf("  %d. ", i++);
-        direction->data = malloc(1024);
-        fgets(direction->data, 1024, stdin);
+        direction->data = malloc(DIRECTION_TEXT_MAX_SIZE);
+        fgets(direction->data, DIRECTION_TEXT_MAX_SIZE, stdin);
         if(direction->data[0] == '\n') {
             free(direction->data);
             free(direction);
@@ -99,14 +99,15 @@ Recipe* get_recipe()
     ListNode* notes = NULL;
 
     if(run_again("Would you like to add any notes? [Y/n]")) {
+        printf("After entering the last note, hit enter twice to finish with notes\n");
         printf("Notes:\n");
         notes = malloc(sizeof(ListNode));
         ListNode* note = notes;
         prev = NULL;
         while(true) {
             printf("  - ");
-            note->data = malloc(1024);
-            fgets(note->data, 1024, stdin);
+            note->data = malloc(NOTE_TEXT_MAX_SIZE);
+            fgets(note->data, NOTE_TEXT_MAX_SIZE, stdin);
             if(note->data[0] == '\n') {
                 free(note->data);
                 free(note);
@@ -135,38 +136,63 @@ Recipe* get_recipe()
     return rec;
 }
 
-void space_to_underscore(char* str)
+char* create_filename(const char* input)
 {
-    int len = strlen(str);
-    for(int i = 0; i < len; ++i) {
-        if(str[i] == ' ') {
-            str[i] = '_';
+    char* filename = malloc(FILENAME_MAX_SIZE);
+
+    /* convert spaces to undercores */
+    int len = strlen(input);
+    int fpos = 0;
+    for(int ipos = 0; ipos < len; ++ipos) {
+        if(input[ipos] == ' ') {
+            filename[fpos++] = '_';
+        } else if(input[ipos] == '\'' || input[ipos] == ',') {
+            continue;
+        } else {
+            filename[fpos++] = input[ipos];
         }
     }
+
+    len = fpos;
+
+    /* add '.md' file extension */
+    int offset = len;
+    int overflow = 0;
+    if(len + 4 > FILENAME_MAX_SIZE) { // strlen() + '.md\0'
+        overflow = len + 4 - FILENAME_MAX_SIZE;
+        offset = len - overflow;
+    }
+    filename[offset] = '.';
+    filename[offset + 1] = 'm';
+    filename[offset + 2] = 'd';
+    filename[offset + 3] = 0;
+
+    return filename;
 }
 
 void write_recipe_to_file(Recipe* rec)
 {
-    char* filename = malloc(strlen(rec->name) + 4); // add chars for '.md' and terminating null
-    sprintf(filename, "%s.md", rec->name);
-    space_to_underscore(filename);
-    printf("Writing recipe for %s to file '%s'\n", rec->name, filename);
+    char* filename = create_filename(rec->name);//malloc(strlen(rec->name) + 4); // add chars for '.md' and terminating null
+    // sprintf(filename, "%s.md", rec->name);
+    // create_filename(filename);
+    printf("Writing recipe for \"%s\" to file \"%s\"\n", rec->name, filename);
 
     FILE* file = fopen(filename, "wx");
     if(errno == EEXIST) {
         do {
-            printf("File %s already exists, please choose a different name: ", filename);
+            printf("File \"%s\" already exists, please choose a different name: ", filename);
             free(filename);
-            filename = malloc(128);
+            char* temp = malloc(FILENAME_MAX_SIZE);
             do {
-                fgets(filename, 128, stdin);
-            } while(filename[0] == '\n');
-            strip_newline_char(filename);
+                fgets(temp, FILENAME_MAX_SIZE, stdin);
+            } while(temp[0] == '\n');
+            strip_newline_char(temp);
+            filename = create_filename(temp);
+            free(temp);
             errno = 0;
             file = fopen(filename, "wx");
         } while(errno == EEXIST);
     }
-    free(filename);
 
     fprintf(file, "## %s\n\n", rec->name);
 
@@ -198,16 +224,17 @@ void write_recipe_to_file(Recipe* rec)
     }
 
     fclose(file);
-    printf("Done writing %s recipe to file\n\n", rec->name);
+    printf("Done writing \"%s\" recipe to file \"%s\"\n\n", rec->name, filename);
+    free(filename);
 }
 
 bool run_again(char* question)
 {
     printf("%s\n", question);
-    char* ans = malloc(128);
+    char* ans = malloc(ANSWER_BUFFER_MAX_SIZE);
 
     do {
-        fgets(ans, 128, stdin);
+        fgets(ans, ANSWER_BUFFER_MAX_SIZE, stdin);
     } while(ans[0] == '\n');
 
     bool temp;
