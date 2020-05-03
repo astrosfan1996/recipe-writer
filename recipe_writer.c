@@ -136,6 +136,11 @@ Recipe* get_recipe()
     return rec;
 }
 
+bool isInvalidChar(char c)
+{
+    return (c == '/' || c == '\\' || c == '\'' || c == ',');
+}
+
 char* create_filename(const char* input)
 {
     char* filename = malloc(FILENAME_MAX_SIZE);
@@ -146,7 +151,7 @@ char* create_filename(const char* input)
     for(int ipos = 0; ipos < len; ++ipos) {
         if(input[ipos] == ' ') {
             filename[fpos++] = '_';
-        } else if(input[ipos] == '\'' || input[ipos] == ',') {
+        } else if(isInvalidChar(input[ipos])) {
             continue;
         } else {
             filename[fpos++] = input[ipos];
@@ -228,7 +233,7 @@ void write_recipe_to_file(Recipe* rec)
     free(filename);
 }
 
-bool run_again(char* question)
+bool run_again(const char* question)
 {
     printf("%s\n", question);
     char* ans = malloc(ANSWER_BUFFER_MAX_SIZE);

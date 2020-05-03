@@ -25,4 +25,4 @@ void free_recipe(Recipe* rec);
 void free_list(ListNode* list);
 Recipe* get_recipe();
 void write_recipe_to_file(Recipe* rec);
-bool run_again();
+bool run_again(const char* question);
