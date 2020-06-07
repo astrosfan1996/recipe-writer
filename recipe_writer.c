@@ -41,58 +41,13 @@ Recipe* get_recipe()
     /* Ingredients */
     printf("After entering the last ingredient, hit enter twice to finish with ingredients\n");
     printf("Ingredients:\n");
-    ListNode* ingredients = malloc(sizeof(ListNode));
-    ListNode* ingredient = ingredients;
-    ListNode* prev = NULL;
-    while(true) {
-        printf("  - ");
-        ingredient->data = malloc(INGREDIENT_NAME_MAX_SIZE);
-        fgets(ingredient->data, INGREDIENT_NAME_MAX_SIZE, stdin);
-        if(ingredient->data[0] == '\n') {
-            free(ingredient->data);
-            free(ingredient);
-            ingredient = NULL;
-            if(prev == NULL) {
-                ingredients = NULL;
-            } else {
-                prev->next = NULL;
-            }
-            break;
-        }
-        strip_newline_char(ingredient->data);
-        prev = ingredient;
-        ingredient->next = malloc(sizeof(ListNode));
-        ingredient = ingredient->next;
-    }
+    ListNode* ingredients = create_list(INGREDIENT_NAME_MAX_SIZE, UNORDERED);
     printf("\n");
 
     /* Directions */
     printf("After entering the last direction, hit enter twice to finish with directions\n");
     printf("Directions:\n");
-    ListNode* directions = malloc(sizeof(ListNode));
-    ListNode* direction = directions;
-    prev = NULL;
-    int i = 1;
-    while(true) {
-        printf("  %d. ", i++);
-        direction->data = malloc(DIRECTION_TEXT_MAX_SIZE);
-        fgets(direction->data, DIRECTION_TEXT_MAX_SIZE, stdin);
-        if(direction->data[0] == '\n') {
-            free(direction->data);
-            free(direction);
-            direction = NULL;
-            if(prev == NULL) {
-                directions = NULL;
-            } else {
-                prev->next = NULL;
-            }
-            break;
-        }
-        strip_newline_char(direction->data);
-        prev = direction;
-        direction->next = malloc(sizeof(ListNode));
-        direction = direction->next;
-    }
+    ListNode* directions = create_list(DIRECTION_TEXT_MAX_SIZE, ORDERED);
     printf("\n");
 
     /* Notes */
@@ -101,29 +56,7 @@ Recipe* get_recipe()
     if(run_again("Would you like to add any notes? [Y/n]")) {
         printf("After entering the last note, hit enter twice to finish with notes\n");
         printf("Notes:\n");
-        notes = malloc(sizeof(ListNode));
-        ListNode* note = notes;
-        prev = NULL;
-        while(true) {
-            printf("  - ");
-            note->data = malloc(NOTE_TEXT_MAX_SIZE);
-            fgets(note->data, NOTE_TEXT_MAX_SIZE, stdin);
-            if(note->data[0] == '\n') {
-                free(note->data);
-                free(note);
-                note = NULL;
-                if(prev == NULL) {
-                    notes = NULL;
-                } else {
-                    prev->next = NULL;
-                }
-                break;
-            }
-            strip_newline_char(note->data);
-            prev = note;
-            note->next = malloc(sizeof(ListNode));
-            note = note->next;
-        }
+        notes = create_list(NOTE_TEXT_MAX_SIZE, UNORDERED);
     }
     printf("\n");
 
@@ -177,9 +110,7 @@ char* create_filename(const char* input)
 
 void write_recipe_to_file(Recipe* rec)
 {
-    char* filename = create_filename(rec->name);//malloc(strlen(rec->name) + 4); // add chars for '.md' and terminating null
-    // sprintf(filename, "%s.md", rec->name);
-    // create_filename(filename);
+    char* filename = create_filename(rec->name);
     printf("Writing recipe for \"%s\" to file \"%s\"\n", rec->name, filename);
 
     FILE* file = fopen(filename, "wx");
@@ -231,6 +162,40 @@ void write_recipe_to_file(Recipe* rec)
     fclose(file);
     printf("Done writing \"%s\" recipe to file \"%s\"\n\n", rec->name, filename);
     free(filename);
+}
+
+ListNode* create_list(int item_max_size, bool list_type)
+{
+    ListNode* list = malloc(sizeof(ListNode));
+    ListNode* item = list;
+    ListNode* prev = NULL;
+    int i = 1;
+
+    while(true) {
+        if(list_type == ORDERED) {
+            printf("  %d. ", i++);
+        } else {
+            printf("  - ");
+        }
+        item->data = malloc(item_max_size);
+        fgets(item->data, item_max_size, stdin);
+        if(item->data[0] == '\n') {
+            free(item->data);
+            free(item);
+            item = NULL;
+            if(prev == NULL) {
+                list = NULL;
+            } else {
+                prev->next = NULL;
+            }
+            break;
+        }
+        strip_newline_char(item->data);
+        prev = item;
+        item->next = malloc(sizeof(ListNode));
+        item = item->next;
+    }
+    return list;
 }
 
 bool run_again(const char* question)
